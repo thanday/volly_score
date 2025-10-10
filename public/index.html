@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Volleyball Score Updater</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Volleyball Score Updater</h1>
+      <div class="status">
+        <label>Status
+          <select id="matchStatus">
+            <option>PRE MATCH</option>
+            <option>HALF TIME</option>
+            <option>FULL TIME</option>
+            <option>FINISHED</option>
+          </select>
+        </label>
+        <label>Serve
+          <select id="serve">
+            <option value="">—</option>
+            <option value="A">Team A</option>
+            <option value="B">Team B</option>
+          </select>
+        </label>
+        <label class="chk"><input type="checkbox" id="timeoutA"> Timeout A</label>
+        <label class="chk"><input type="checkbox" id="timeoutB"> Timeout B</label>
+        <button id="saveAll" class="primary">Save All</button>
+        <button id="resetAll" class="danger">Reset for Next Match</button>
+      </div>
+    </header>
+
+    <main class="grid">
+      <!-- Team A -->
+      <section class="team card" id="teamA">
+        <div class="team-head">
+          <img id="logoA" alt="Team A Logo" />
+          <div>
+            <label>Team A Name
+              <input id="teamAName" placeholder="TEAM A" />
+            </label>
+            <div class="upload">
+              <input type="file" id="uploadA" accept="image/png,image/jpeg,image/webp" />
+              <button class="outline" data-upload="A">Upload Logo</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="score-row">
+          <button class="big" data-dec="A">−</button>
+          <div class="score" id="scoreA">0</div>
+          <button class="big" data-inc="A">+</button>
+        </div>
+
+        <div class="sets">
+          <label>Sets Won
+            <input id="setsWonA" type="number" min="0" max="5" value="0" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Team B -->
+      <section class="team card" id="teamB">
+        <div class="team-head">
+          <img id="logoB" alt="Team B Logo" />
+          <div>
+            <label>Team B Name
+              <input id="teamBName" placeholder="TEAM B" />
+            </label>
+            <div class="upload">
+              <input type="file" id="uploadB" accept="image/png,image/jpeg,image/webp" />
+              <button class="outline" data-upload="B">Upload Logo</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="score-row">
+          <button class="big" data-dec="B">−</button>
+          <div class="score" id="scoreB">0</div>
+          <button class="big" data-inc="B">+</button>
+        </div>
+
+        <div class="sets">
+          <label>Sets Won
+            <input id="setsWonB" type="number" min="0" max="5" value="0" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Per-Set + Preview -->
+      <section class="card extras">
+        <h3>Per-Set Scores (optional)</h3>
+        <p>Format each as <code>25-23</code>. Only filled rows are saved.</p>
+        <div id="setList" class="setlist"></div>
+        <button id="addSet" class="outline">+ Add Set</button>
+        <div class="json-preview">
+          <h4>Live JSON Preview</h4>
+          <pre id="jsonPreview"></pre>
+          <div class="row">
+            <button id="refresh" class="outline">Refresh</button>
+            <a class="link" href="/data/score.json" target="_blank">Open JSON</a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/client.js"></script>
+</body>
+</html>

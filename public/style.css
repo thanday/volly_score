@@ -1,0 +1,234 @@
+:root {
+    --bg: #0b0f1a;
+    --card: #131a2a;
+    --ink: #e7ecf7;
+    --muted: #95a3bf;
+    --brand: #4f8cff;
+    --ok: #16c172;
+    --warn: #ffb020;
+    --danger: #ff5d5d;
+}
+
+* { box-sizing: border-box }
+
+html, body { height: 100% }
+
+body {
+    margin: 0;
+    background: radial-gradient(1200px 600px at 80% -10%, #1b2540 0%, #0b0f1a 60%);
+    color: var(--ink);
+    font: 15px/1.4 system-ui, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.wrap { max-width: 1200px; margin: 0 auto; padding: 24px }
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px
+}
+
+h1 { font-size: 22px; margin: 0 }
+
+.status {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap
+}
+
+.status label {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    color: var(--muted)
+}
+
+select, input {
+    background: #0f1424;
+    color: var(--ink);
+    border: 1px solid #2b3550;
+    border-radius: 12px;
+    padding: 12px
+}
+
+input[type="number"] { text-align: center }
+
+button {
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: white;
+    background: var(--brand);
+    box-shadow: 0 6px 20px rgba(79, 140, 255, .25);
+    transition: .2s
+}
+
+button:hover { filter: brightness(1.05) }
+
+button.outline {
+    background: transparent;
+    border-color: #2b3550;
+    color: var(--ink)
+}
+
+button.big {
+    font-size: 40px;
+    padding: 14px 22px;
+    border-radius: 18px;
+    background: #223058
+}
+
+button.primary { background: linear-gradient(180deg, #5a9bff, #3f7fff) }
+button.danger  { background: var(--danger) }
+
+.card {
+    background: var(--card);
+    border: 1px solid #26314e;
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .3)
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px
+}
+
+.team .team-head { display: flex; gap: 14px }
+
+.team img {
+    width: 96px;
+    height: 96px;
+    border-radius: 14px;
+    border: 1px solid #2b3550;
+    object-fit: contain;
+    background: #0f1424
+}
+
+.team label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--muted)
+}
+
+.upload { display: flex; gap: 8px; align-items: center; margin-top: 6px }
+
+.score-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 16px 0
+}
+
+.score {
+    font-size: 72px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    padding: 10px 26px;
+    border-radius: 18px;
+    background: #0f1424;
+    border: 1px solid #2b3550;
+    min-width: 140px;
+    text-align: center
+}
+
+.sets {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: center
+}
+
+.sets label { font-size: 18px }
+
+.sets input {
+    width: 140px;
+    height: 64px;
+    font-size: 32px;
+    border-radius: 14px
+}
+
+.extras h3 { margin: 4px 0 8px }
+
+.setlist { display: flex; flex-direction: column; gap: 8px }
+.setitem { display: flex; gap: 8px; align-items: center }
+
+.setitem input { width: 140px; text-align: center }
+.setitem button { background: #2b3550 }
+
+.json-preview {
+    margin-top: 14px;
+    border-top: 1px dashed #2b3550;
+    padding-top: 12px
+}
+
+pre {
+    max-height: 240px;
+    overflow: auto;
+    background: #0f1424;
+    border: 1px solid #2b3550;
+    border-radius: 12px;
+    padding: 10px
+}
+
+.row { display: flex; gap: 10px; align-items: center; margin-top: 8px }
+.chk { background: #0f1424; border: 1px solid #2b3550; border-radius: 10px; padding: 8px 10px }
+
+/* ===== Tablet / iPad mini breakpoints ===== */
+@media (max-width: 1024px) {
+  .wrap { max-width:none; padding:16px }
+  header { flex-direction:column; align-items:flex-start; gap:10px }
+  h1 { font-size:20px }
+
+  .status { gap:8px }
+  .status label { font-size:13px }
+  button { padding:10px 14px; border-radius:12px }
+  button.primary, button.danger { min-height:40px }
+
+  .grid { grid-template-columns:1fr; gap:14px }
+  .team.card { order:1 }
+  #teamB.team.card { order:2 }
+  .extras { order:3 }
+
+  .card { border-radius:16px; padding:14px }
+  .team img { width:80px; height:80px; border-radius:12px }
+
+  select, input { padding:12px; border-radius:12px; font-size:16px }
+
+  .score-row { gap:14px; margin:12px 0 }
+  .score { font-size:72px; min-width:132px; padding:10px 20px; border-radius:16px }
+  button.big { font-size:36px; padding:12px 18px; border-radius:16px }
+
+  .sets { gap:12px }
+  .sets label { font-size:16px }
+  .sets input { width:150px; height:62px; font-size:30px; border-radius:14px }
+
+  .extras h3 { margin:0 0 6px }
+  .setitem input { width:130px }
+  pre { max-height:200px }
+}
+
+@media (max-width: 820px){
+  .wrap{padding:12px}
+  header{gap:8px}
+  .status{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .status > *{width:100%}
+  #saveAll, #resetAll{grid-column:1 / -1; width:100%}
+  .score{font-size:66px;min-width:120px}
+  button.big{font-size:34px}
+  .team img{width:72px;height:72px}
+}
+
+@media (max-width: 700px){
+  .score{font-size:60px}
+  button.big{font-size:32px}
+  .sets input{width:140px;height:58px;font-size:28px}
+  pre{max-height:160px}
+}
