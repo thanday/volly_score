@@ -1,4 +1,4 @@
-const $  = (s) => document.querySelector(s);
+const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 
 const state = {
@@ -6,11 +6,14 @@ const state = {
   teamBName: '', teamBLogo: '', scoreB: 0, setsWonB: 0,
   setScores: [], serve: null, timeoutA: false, timeoutB: false,
   matchStatus: 'WARMUP', updatedAt: '',
-  penalty: { slots: 5, A: Array(5).fill('gray'), B: Array(5).fill('gray') }
+  penalty: { slots: 5, A: Array(5).fill('gray'), B: Array(5).fill('gray') },
+  penaltyScoreA: 0,
+  penaltyScoreB: 0,
+
 };
 
 
-async function load(){
+async function load() {
   const res = await fetch('/api/score?_=' + Date.now());
   Object.assign(state, await res.json());
   paint();
@@ -30,7 +33,7 @@ function paintPenalty(sideId, arr) {
 }
 
 
-function paint(){
+function paint() {
   $('#teamAName').value = state.teamAName || '';
   $('#teamBName').value = state.teamBName || '';
   $('#scoreA').textContent = state.scoreA;
@@ -52,6 +55,10 @@ function paint(){
   paintPenalty('penB', state.penalty.B);
 
   // preview update
+  document.getElementById('penaltyScoreA').textContent = state.penaltyScoreA ?? 0;
+  document.getElementById('penaltyScoreB').textContent = state.penaltyScoreB ?? 0;
+  
+
   document.getElementById('jsonPreview').textContent = JSON.stringify(state, null, 2);
   // render set rows
   const list = $('#setList');
@@ -60,7 +67,7 @@ function paint(){
     const row = document.createElement('div');
     row.className = 'setitem';
     row.innerHTML = `
-      <span>Set ${idx+1}</span>
+      <span>Set ${idx + 1}</span>
       <input data-setidx="${idx}" placeholder="25-23" value="${val}">
       <button data-delset="${idx}">Remove</button>
     `;
@@ -70,7 +77,7 @@ function paint(){
   $('#jsonPreview').textContent = JSON.stringify(state, null, 2);
 }
 
-function collect(){
+function collect() {
   const setInputs = $$('#setList input');
   const setScores = setInputs.map(i => i.value.trim()).filter(Boolean);
   return {
@@ -90,7 +97,29 @@ function collect(){
   };
 }
 
-async function saveAll(){
+async function savePenaltyScores() {
+  const a = parseInt(document.getElementById('penaltyScoreA').value, 10) || 0;
+  const b = parseInt(document.getElementById('penaltyScoreB').value, 10) || 0;
+  const res = await fetch('/api/penalty-score', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ penaltyScoreA: a, penaltyScoreB: b })
+  });
+  const data = await res.json();
+  Object.assign(state, data);
+  paint();
+}
+
+async function resetPenalty() {
+  const yes = confirm('Reset penalty shootout (dots gray, scores 0)?');
+  if (!yes) return;
+  const res = await fetch('/api/reset-penalty', { method: 'POST' });
+  const json = await res.json();
+  if (json.ok) { Object.assign(state, json.data); paint(); }
+  else alert(json.error || 'Reset failed');
+}
+
+
+async function saveAll() {
   const res = await fetch('/api/score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -100,7 +129,7 @@ async function saveAll(){
   paint();
 }
 
-async function resetAll(){
+async function resetAll() {
   if (!confirm('Reset to defaults and delete ALL uploaded logos?')) return;
   const res = await fetch('/api/reset-all', { method: 'POST' });
   const json = await res.json();
@@ -108,7 +137,7 @@ async function resetAll(){
   else { alert(json.error || 'Reset failed'); }
 }
 
-async function changeScore(team, dir){
+async function changeScore(team, dir) {
   const url = dir === 'inc' ? '/api/score/increment' : '/api/score/decrement';
   const res = await fetch(url, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -117,10 +146,22 @@ async function changeScore(team, dir){
   Object.assign(state, await res.json());
   paint();
 }
+async function changePenaltyScore(team, delta) {
+  const route = delta > 0 ? '/api/penalty-score/increment' : '/api/penalty-score/decrement';
+  const res = await fetch(route, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ team })
+  });
+  const data = await res.json();
+  Object.assign(state, data);
+  paint();
+}
 
-async function uploadLogo(side){
+
+async function uploadLogo(side) {
   const input = side === 'A' ? $('#uploadA') : $('#uploadB');
-  const file  = input.files[0];
+  const file = input.files[0];
   if (!file) return alert('Choose a file first');
   const fd = new FormData(); fd.append('logo', file);
   const res = await fetch('/api/upload-logo', { method: 'POST', body: fd });
@@ -135,7 +176,7 @@ function nextState(curr) {
   if (curr === '#00FF00') return '#FF0000';  // green → red
   return '#808080';                          // red → gray
 }
-async function setPenalty(side, index, value){
+async function setPenalty(side, index, value) {
   const res = await fetch('/api/penalty', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -188,6 +229,16 @@ window.addEventListener('DOMContentLoaded', () => {
   // logo uploads
   document.querySelector('[data-upload="A"]').addEventListener('click', () => uploadLogo('A'));
   document.querySelector('[data-upload="B"]').addEventListener('click', () => uploadLogo('B'));
+
+
+  document.getElementById('resetPenalty').addEventListener('click', resetPenalty);
+
+  document.getElementById('penaltyPlusA').addEventListener('click', () => changePenaltyScore('A', 1));
+document.getElementById('penaltyMinusA').addEventListener('click', () => changePenaltyScore('A', -1));
+document.getElementById('penaltyPlusB').addEventListener('click', () => changePenaltyScore('B', 1));
+document.getElementById('penaltyMinusB').addEventListener('click', () => changePenaltyScore('B', -1));
+
+
 
   // add/remove set rows
   $('#addSet').addEventListener('click', () => {

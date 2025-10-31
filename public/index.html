@@ -30,6 +30,7 @@
         <label class="chk"><input type="checkbox" id="timeoutB"> Timeout B</label>
         <button id="saveAll" class="primary">Save All</button>
         <button id="resetAll" class="danger">Reset for Next Match</button>
+        <button id="resetPenalty" class="danger outline">Reset Penalty</button>
       </div>
     </header>
 
@@ -63,7 +64,13 @@
         <div class="penalty">
           <h4>Penalty Shootout</h4>
           <div class="pills" id="penA"></div>
-        </div>
+          <div class="penalty-score-row">
+            <button class="big" id="penaltyMinusA">−</button>
+            <div class="penalty-score" id="penaltyScoreA">0</div>
+            <button class="big" id="penaltyPlusA">+</button>
+          </div>
+          
+        </div>        
         
       </section>
 
@@ -96,7 +103,14 @@
         <div class="penalty">
           <h4>Penalty Shootout</h4>
           <div class="pills" id="penB"></div>
+          <div class="penalty-score-row">
+            <button class="big" id="penaltyMinusB">−</button>
+            <div class="penalty-score" id="penaltyScoreB">0</div>
+            <button class="big" id="penaltyPlusB">+</button>
+          </div>
+          
         </div>
+        
         
       </section>
 

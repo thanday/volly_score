@@ -5,14 +5,14 @@ import multer from 'multer';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
+const __dirname = path.dirname(__filename);
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3030;
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const DATA_DIR   = path.join(PUBLIC_DIR, 'data');
-const LOGO_DIR   = path.join(PUBLIC_DIR, 'logos');
+const DATA_DIR = path.join(PUBLIC_DIR, 'data');
+const LOGO_DIR = path.join(PUBLIC_DIR, 'logos');
 
 [PUBLIC_DIR, DATA_DIR, LOGO_DIR].forEach((p) => {
   if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
@@ -20,7 +20,7 @@ const LOGO_DIR   = path.join(PUBLIC_DIR, 'logos');
 
 // ---- State
 const SCORE_JSON = path.join(DATA_DIR, 'score.json');
-function defaultState () {
+function defaultState() {
   return {
     teamAName: "TEAM A",
     teamALogo: "",
@@ -30,12 +30,14 @@ function defaultState () {
     scoreB: 0,
     setsWonA: 0,
     setsWonB: 0,
-    setScores: [],         
-    serve: null,           
+    setScores: [],
+    serve: null,
     timeoutA: false,
     timeoutB: false,
-    matchStatus: "WARMUP", 
+    matchStatus: "WARMUP",
     penalty: { slots: 5, A: Array(5).fill('#808080'), B: Array(5).fill('#808080') },
+    penaltyScoreA: 0,
+    penaltyScoreB: 0,
     updatedAt: new Date().toISOString()
   };
 }
@@ -48,26 +50,28 @@ app.get('/data/score.json', (req, res) => {
     const s = readScore();
     const slots = s.penalty?.slots ?? 5;
     const row = {
-      teamAName:  s.teamAName,
-      teamALogo:  s.teamALogo,
-      teamBName:  s.teamBName,
-      teamBLogo:  s.teamBLogo,
-      scoreA:     s.scoreA,
-      scoreB:     s.scoreB,
-      setsWonA:   s.setsWonA,
-      setsWonB:   s.setsWonB,
-      serve:      s.serve,
-      timeoutA:   s.timeoutA,
-      timeoutB:   s.timeoutB,
-      matchStatus:s.matchStatus,
-      updatedAt:  s.updatedAt,
+      teamAName: s.teamAName,
+      teamALogo: s.teamALogo,
+      teamBName: s.teamBName,
+      teamBLogo: s.teamBLogo,
+      scoreA: s.scoreA,
+      scoreB: s.scoreB,
+      setsWonA: s.setsWonA,
+      setsWonB: s.setsWonB,
+      serve: s.serve,
+      timeoutA: s.timeoutA,
+      timeoutB: s.timeoutB,
+      matchStatus: s.matchStatus,
+      penaltyScoreA: s.penaltyScoreA || 0,
+      penaltyScoreB: s.penaltyScoreB || 0,
+      updatedAt: s.updatedAt,
     };
 
-    const A = (s.penalty?.A ?? Array(slots).fill('gray'));
-    const B = (s.penalty?.B ?? Array(slots).fill('gray'));
+    const A = (s.penalty?.A ?? Array(slots).fill('#808080'));
+    const B = (s.penalty?.B ?? Array(slots).fill('#808080'));
     for (let i = 0; i < slots; i++) {
-      row[`pA${i + 1}`] = A[i] || 'gray';
-      row[`pB${i + 1}`] = B[i] || 'gray';
+      row[`pA${i+1}`] = A[i] || '#808080';
+      row[`pB${i+1}`] = B[i] || '#808080';
     }
 
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -79,7 +83,7 @@ app.get('/data/score.json', (req, res) => {
   }
 });
 
-  
+
 // ---- Middleware
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -89,7 +93,7 @@ app.use(express.static(PUBLIC_DIR));
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, LOGO_DIR),
   filename: (req, file, cb) => {
-    const ext  = path.extname(file.originalname).toLowerCase();
+    const ext = path.extname(file.originalname).toLowerCase();
     const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
     cb(null, name);
   }
@@ -103,7 +107,7 @@ const upload = multer({
   limits: { fileSize: 2 * 1024 * 1024 } // 2MB
 });
 
-const readScore  = () => JSON.parse(fs.readFileSync(SCORE_JSON, 'utf8'));
+const readScore = () => JSON.parse(fs.readFileSync(SCORE_JSON, 'utf8'));
 const writeScore = (obj) => {
   obj.updatedAt = new Date().toISOString();
   fs.writeFileSync(SCORE_JSON, JSON.stringify(obj, null, 2), 'utf8');
@@ -111,7 +115,7 @@ const writeScore = (obj) => {
 
 // ---- API
 app.get('/api/score', (req, res) => {
-  try   { res.json(readScore()); }
+  try { res.json(readScore()); }
   catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -126,7 +130,7 @@ app.post('/api/score', (req, res) => {
 });
 
 app.post('/api/score/increment', (req, res) => {
-  const { team } = req.body; 
+  const { team } = req.body;
   const data = readScore();
   if (team === 'A') data.scoreA += 1;
   if (team === 'B') data.scoreB += 1;
@@ -143,10 +147,62 @@ app.post('/api/score/decrement', (req, res) => {
   res.json(data);
 });
 
+// Increment / Decrement Penalty Score
+app.post('/api/penalty-score/increment', (req, res) => {
+  const { team } = req.body; // 'A' or 'B'
+  const data = readScore();
+  if (team === 'A') data.penaltyScoreA = (data.penaltyScoreA || 0) + 1;
+  if (team === 'B') data.penaltyScoreB = (data.penaltyScoreB || 0) + 1;
+  data.updatedAt = new Date().toISOString();
+  writeScore(data);
+  res.json(data);
+});
+
+app.post('/api/penalty-score/decrement', (req, res) => {
+  const { team } = req.body;
+  const data = readScore();
+  if (team === 'A') data.penaltyScoreA = Math.max(0, (data.penaltyScoreA || 0) - 1);
+  if (team === 'B') data.penaltyScoreB = Math.max(0, (data.penaltyScoreB || 0) - 1);
+  data.updatedAt = new Date().toISOString();
+  writeScore(data);
+  res.json(data);
+});
+
+
+app.post('/api/penalty-score', (req, res) => {
+  try {
+    const data = readScore();
+    const { penaltyScoreA, penaltyScoreB } = req.body || {};
+
+    if (penaltyScoreA != null) data.penaltyScoreA = Math.max(0, parseInt(penaltyScoreA, 10) || 0);
+    if (penaltyScoreB != null) data.penaltyScoreB = Math.max(0, parseInt(penaltyScoreB, 10) || 0);
+
+    writeScore(data);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/reset-penalty', (req, res) => {
+  try {
+    const data  = readScore();
+    const slots = data.penalty?.slots ?? 5;
+    data.penalty       = { slots, A: Array(slots).fill('#808080'), B: Array(slots).fill('#808080') };
+    data.penaltyScoreA = 0;
+    data.penaltyScoreB = 0;
+    writeScore(data);
+    res.json({ ok: true, data });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+
 app.post('/api/penalty', (req, res) => {
   try {
     const { side, index } = req.body || {};
-    let   { state }       = req.body || {};
+    let { state } = req.body || {};
 
     const validSide = side === 'A' || side === 'B';
     if (!validSide || index == null) {
@@ -163,7 +219,7 @@ app.post('/api/penalty', (req, res) => {
       return res.status(400).json({ error: 'Invalid color. Use #RRGGBB or gray/green/red.' });
     }
 
-    const data  = readScore();
+    const data = readScore();
     const slots = data.penalty?.slots ?? 5;
     if (index < 0 || index >= slots) {
       return res.status(400).json({ error: 'Index out of range' });
@@ -171,7 +227,7 @@ app.post('/api/penalty', (req, res) => {
     if (!data.penalty) {
       data.penalty = { slots, A: Array(slots).fill('#808080'), B: Array(slots).fill('#808080') };
     } else {
-      const toHexRow = (row=[]) => row.map(v => NAME2HEX[v]?.toUpperCase?.() || (typeof v === 'string' ? v.toUpperCase() : '#808080'));
+      const toHexRow = (row = []) => row.map(v => NAME2HEX[v]?.toUpperCase?.() || (typeof v === 'string' ? v.toUpperCase() : '#808080'));
       data.penalty.A = toHexRow(data.penalty.A);
       data.penalty.B = toHexRow(data.penalty.B);
     }
@@ -196,7 +252,7 @@ app.post('/api/reset-all', (req, res) => {
   try {
     if (fs.existsSync(LOGO_DIR)) {
       for (const f of fs.readdirSync(LOGO_DIR)) {
-        try { fs.unlinkSync(path.join(LOGO_DIR, f)); } catch {}
+        try { fs.unlinkSync(path.join(LOGO_DIR, f)); } catch { }
       }
     }
     const fresh = defaultState();
