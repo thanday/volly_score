@@ -35,6 +35,7 @@ function defaultState () {
     timeoutA: false,
     timeoutB: false,
     matchStatus: "WARMUP", 
+    penalty: { slots: 5, A: Array(5).fill('#808080'), B: Array(5).fill('#808080') },
     updatedAt: new Date().toISOString()
   };
 }
@@ -42,35 +43,41 @@ if (!fs.existsSync(SCORE_JSON)) {
   fs.writeFileSync(SCORE_JSON, JSON.stringify(defaultState(), null, 2), 'utf8');
 }
 
-// Serve vMix-friendly JSON at /data/score.json
 app.get('/data/score.json', (req, res) => {
-    try {
-      const s = readScore();
-      // wrap in array so vMix sees a "table"
-      const row = {
-        teamAName:  s.teamAName,
-        teamALogo:  s.teamALogo,
-        teamBName:  s.teamBName,
-        teamBLogo:  s.teamBLogo,
-        scoreA:     s.scoreA,
-        scoreB:     s.scoreB,
-        setsWonA:   s.setsWonA,
-        setsWonB:   s.setsWonB,
-        serve:      s.serve,
-        timeoutA:   s.timeoutA,
-        timeoutB:   s.timeoutB,
-        matchStatus:s.matchStatus,
-        updatedAt:  s.updatedAt
-      };
-  
-      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', '0');
-      res.json([row]); 
-    } catch (e) {
-      res.status(500).json([{ error: e.message }]);
+  try {
+    const s = readScore();
+    const slots = s.penalty?.slots ?? 5;
+    const row = {
+      teamAName:  s.teamAName,
+      teamALogo:  s.teamALogo,
+      teamBName:  s.teamBName,
+      teamBLogo:  s.teamBLogo,
+      scoreA:     s.scoreA,
+      scoreB:     s.scoreB,
+      setsWonA:   s.setsWonA,
+      setsWonB:   s.setsWonB,
+      serve:      s.serve,
+      timeoutA:   s.timeoutA,
+      timeoutB:   s.timeoutB,
+      matchStatus:s.matchStatus,
+      updatedAt:  s.updatedAt,
+    };
+
+    const A = (s.penalty?.A ?? Array(slots).fill('gray'));
+    const B = (s.penalty?.B ?? Array(slots).fill('gray'));
+    for (let i = 0; i < slots; i++) {
+      row[`pA${i + 1}`] = A[i] || 'gray';
+      row[`pB${i + 1}`] = B[i] || 'gray';
     }
-  });
+
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.json([row]);
+  } catch (e) {
+    res.status(500).json([{ error: e.message }]);
+  }
+});
 
   
 // ---- Middleware
@@ -135,6 +142,49 @@ app.post('/api/score/decrement', (req, res) => {
   writeScore(data);
   res.json(data);
 });
+
+app.post('/api/penalty', (req, res) => {
+  try {
+    const { side, index } = req.body || {};
+    let   { state }       = req.body || {};
+
+    const validSide = side === 'A' || side === 'B';
+    if (!validSide || index == null) {
+      return res.status(400).json({ error: 'Invalid side/index' });
+    }
+
+    const NAME2HEX = { gray: '#808080', green: '#00FF00', red: '#FF0000' };
+    if (typeof state === 'string' && NAME2HEX[state.toLowerCase()]) {
+      state = NAME2HEX[state.toLowerCase()];
+    }
+
+    const isHex = typeof state === 'string' && /^#[0-9A-F]{6}$/i.test(state);
+    if (!isHex) {
+      return res.status(400).json({ error: 'Invalid color. Use #RRGGBB or gray/green/red.' });
+    }
+
+    const data  = readScore();
+    const slots = data.penalty?.slots ?? 5;
+    if (index < 0 || index >= slots) {
+      return res.status(400).json({ error: 'Index out of range' });
+    }
+    if (!data.penalty) {
+      data.penalty = { slots, A: Array(slots).fill('#808080'), B: Array(slots).fill('#808080') };
+    } else {
+      const toHexRow = (row=[]) => row.map(v => NAME2HEX[v]?.toUpperCase?.() || (typeof v === 'string' ? v.toUpperCase() : '#808080'));
+      data.penalty.A = toHexRow(data.penalty.A);
+      data.penalty.B = toHexRow(data.penalty.B);
+    }
+
+    data.penalty[side][index] = state.toUpperCase();
+    writeScore(data);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
 
 app.post('/api/upload-logo', upload.single('logo'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });

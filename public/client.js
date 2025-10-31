@@ -5,14 +5,30 @@ const state = {
   teamAName: '', teamALogo: '', scoreA: 0, setsWonA: 0,
   teamBName: '', teamBLogo: '', scoreB: 0, setsWonB: 0,
   setScores: [], serve: null, timeoutA: false, timeoutB: false,
-  matchStatus: 'WARMUP', updatedAt: ''
+  matchStatus: 'WARMUP', updatedAt: '',
+  penalty: { slots: 5, A: Array(5).fill('gray'), B: Array(5).fill('gray') }
 };
+
 
 async function load(){
   const res = await fetch('/api/score?_=' + Date.now());
   Object.assign(state, await res.json());
   paint();
 }
+
+function paintPenalty(sideId, arr) {
+  const host = document.getElementById(sideId);
+  host.innerHTML = '';
+  arr.forEach((val, idx) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.dataset.index = idx;
+    d.dataset.side = sideId === 'penA' ? 'A' : 'B';
+    d.style.backgroundColor = val || '#808080';
+    host.appendChild(d);
+  });
+}
+
 
 function paint(){
   $('#teamAName').value = state.teamAName || '';
@@ -28,7 +44,15 @@ function paint(){
 
   if (state.teamALogo) $('#logoA').src = state.teamALogo; else $('#logoA').removeAttribute('src');
   if (state.teamBLogo) $('#logoB').src = state.teamBLogo; else $('#logoB').removeAttribute('src');
+  // penalties
+  const slots = state.penalty?.slots ?? 5;
+  if (!state.penalty?.A) state.penalty.A = Array(slots).fill('gray');
+  if (!state.penalty?.B) state.penalty.B = Array(slots).fill('gray');
+  paintPenalty('penA', state.penalty.A);
+  paintPenalty('penB', state.penalty.B);
 
+  // preview update
+  document.getElementById('jsonPreview').textContent = JSON.stringify(state, null, 2);
   // render set rows
   const list = $('#setList');
   list.innerHTML = '';
@@ -105,6 +129,47 @@ async function uploadLogo(side){
   if (side === 'A') state.teamALogo = data.url; else state.teamBLogo = data.url;
   await saveAll(); // persist logo into score.json
 }
+
+function nextState(curr) {
+  if (curr === '#808080') return '#00FF00';  // gray → green
+  if (curr === '#00FF00') return '#FF0000';  // green → red
+  return '#808080';                          // red → gray
+}
+async function setPenalty(side, index, value){
+  const res = await fetch('/api/penalty', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ side, index, state: value })
+  });
+  const data = await res.json();
+  Object.assign(state, data);
+  paint();
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('dot')) {
+    const side = e.target.dataset.side;
+    const index = Number(e.target.dataset.index);
+    const curr = rgbToHex(window.getComputedStyle(e.target).backgroundColor);
+    const next = nextState(curr);
+    e.target.style.backgroundColor = next;
+    fetch('/api/penalty', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ side, index, state: next })
+    }).then(r => r.json()).then(data => {
+      Object.assign(state, data);
+      paint();
+    });
+  }
+});
+
+function rgbToHex(rgb) {
+  const m = rgb.match(/\d+/g);
+  if (!m) return '#808080';
+  return '#' + m.slice(0, 3).map(x => ('0' + parseInt(x).toString(16)).slice(-2)).join('').toUpperCase();
+}
+
 
 window.addEventListener('DOMContentLoaded', () => {
   load();

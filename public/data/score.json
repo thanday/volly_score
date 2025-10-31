@@ -3,14 +3,31 @@
   "teamALogo": "/logos/1757166260214-5caczgcbl8a.png",
   "teamBName": "UKULHAS",
   "teamBLogo": "/logos/1757166232202-jv62h1g4ylr.png",
-  "scoreA": 13,
-  "scoreB": 11,
+  "scoreA": 5,
+  "scoreB": 4,
   "setsWonA": 0,
   "setsWonB": 0,
   "setScores": [],
   "serve": "B",
   "timeoutA": false,
   "timeoutB": false,
-  "matchStatus": "FULL TIME",
-  "updatedAt": "2025-09-06T16:27:03.558Z"
+  "matchStatus": "HALF TIME",
+  "updatedAt": "2025-10-31T18:42:32.342Z",
+  "penalty": {
+    "slots": 5,
+    "A": [
+      "#00FF00",
+      "#808080",
+      "#808080",
+      "#808080",
+      "#808080"
+    ],
+    "B": [
+      "#FF0000",
+      "#808080",
+      "#808080",
+      "#808080",
+      "#808080"
+    ]
+  }
 }
