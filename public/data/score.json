@@ -1,18 +1,17 @@
 {
-  "teamAName": "RASDHOO",
-  "teamALogo": "/logos/1757166260214-5caczgcbl8a.png",
-  "teamBName": "UKULHAS",
-  "teamBLogo": "/logos/1757166232202-jv62h1g4ylr.png",
-  "scoreA": 9,
-  "scoreB": 10,
+  "teamAName": "TEAM A",
+  "teamALogo": "",
+  "teamBName": "TEAM B",
+  "teamBLogo": "",
+  "scoreA": 0,
+  "scoreB": 0,
   "setsWonA": 0,
   "setsWonB": 0,
   "setScores": [],
-  "serve": "B",
+  "serve": null,
   "timeoutA": false,
   "timeoutB": false,
-  "matchStatus": "HALF TIME",
-  "updatedAt": "2025-10-31T19:34:23.123Z",
+  "matchStatus": "PRE MATCH",
   "penalty": {
     "slots": 5,
     "A": [
@@ -31,5 +30,6 @@
     ]
   },
   "penaltyScoreA": 0,
-  "penaltyScoreB": 0
+  "penaltyScoreB": 0,
+  "updatedAt": "2025-11-01T09:35:49.160Z"
 }

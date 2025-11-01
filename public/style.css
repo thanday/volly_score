@@ -28,7 +28,8 @@ body {
 .wrap {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 24px
+    padding: 15px;
+    
 }
 
 header {
@@ -118,7 +119,8 @@ button.danger {
 .grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px
+    gap: 16px;
+    
 }
 
 .team .team-head {
